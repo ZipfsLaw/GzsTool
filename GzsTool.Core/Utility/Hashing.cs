@@ -155,6 +155,7 @@ namespace GzsTool.Core.Utility
             "vo.evf",
             "vpc",
             "wem",
+            "wmv",
             "xml"
         };
 
