@@ -68,29 +68,31 @@ namespace GzsTool.Core.Pftxs
 
         public override void Write(Stream output, IDirectory inputDirectory)
         {
-            BinaryWriter writer = new BinaryWriter(output, Encoding.Default, true);
-            long ftexHeaderPosition = output.Position;
-            output.Position += FtexHeaderSize;
-            long texlHeaderPosition = output.Position;
-            output.Position += TexlHeaderSize;
-            foreach (var file in Files)
+            using (BinaryWriter writer = new BinaryWriter(output, Encoding.Default, true))
             {
-                file.WriteData(writer, inputDirectory);
+                long ftexHeaderPosition = output.Position;
+                output.Position += FtexHeaderSize;
+                long texlHeaderPosition = output.Position;
+                output.Position += TexlHeaderSize;
+                foreach (var file in Files)
+                {
+                    file.WriteData(writer, inputDirectory);
+                }
+
+                long endPosition = output.Position;
+                output.Position = ftexHeaderPosition;
+                writer.Write(0x58544650); // PFTX
+                writer.Write(0x40000000);
+                writer.Write(0x00000010);
+                writer.Write(0x00000001);
+
+                output.Position = texlHeaderPosition;
+                writer.Write(0x4C584554); // TEXL
+                writer.Write(Convert.ToUInt32(endPosition - texlHeaderPosition)); // Size
+                writer.Write(Convert.ToUInt32(Files.Count));
+
+                output.Position = endPosition;
             }
-
-            long endPosition = output.Position;
-            output.Position = ftexHeaderPosition;
-            writer.Write(0x58544650); // PFTX
-            writer.Write(0x40000000);
-            writer.Write(0x00000010);
-            writer.Write(0x00000001);
-
-            output.Position = texlHeaderPosition;
-            writer.Write(0x4C584554); // TEXL
-            writer.Write(Convert.ToUInt32(endPosition - texlHeaderPosition)); // Size
-            writer.Write(Convert.ToUInt32(Files.Count));
-            
-            output.Position = endPosition;
         }
     }
 }

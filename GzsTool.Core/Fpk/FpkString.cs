@@ -66,20 +66,24 @@ namespace GzsTool.Core.Fpk
 
         public void WriteString(Stream output)
         {
-            BinaryWriter writer = new BinaryWriter(output, Encoding.Default, true);
-            StringOffset = (int) output.Position;
-            string value = ValueEncrypted ? Encoding.Default.GetString(EncryptedValue) : Value;
-            StringLength = value.Length;
-            writer.WriteNullTerminatedString(value);
+            using (BinaryWriter writer = new BinaryWriter(output, Encoding.Default, true))
+            {
+                StringOffset = (int)output.Position;
+                string value = ValueEncrypted ? Encoding.Default.GetString(EncryptedValue) : Value;
+                StringLength = value.Length;
+                writer.WriteNullTerminatedString(value);
+            }
         }
 
         public void Write(Stream output)
         {
-            BinaryWriter writer = new BinaryWriter(output, Encoding.Default, true);
-            writer.Write(StringOffset);
-            writer.WriteZeros(4);
-            writer.Write(StringLength);
-            writer.WriteZeros(4);
+            using (BinaryWriter writer = new BinaryWriter(output, Encoding.Default, true))
+            {
+                writer.Write(StringOffset);
+                writer.WriteZeros(4);
+                writer.Write(StringLength);
+                writer.WriteZeros(4);
+            }
         }
     }
 }

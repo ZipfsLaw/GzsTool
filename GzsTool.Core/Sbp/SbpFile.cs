@@ -43,36 +43,37 @@ namespace GzsTool.Core.Sbp
 
         public override void Write(Stream output, IDirectory inputDirectory)
         {
-            BinaryWriter writer = new BinaryWriter(output, Encoding.ASCII, true);
-
-            const int sbpHeaderSize = 8;
-            int entityHeaderSize = Entries.Count * SbpEntry.HeaderSize;
-            int headerSize = sbpHeaderSize + entityHeaderSize;
-
-            long headerPosition = output.Position;
-            output.Position += headerSize;
-            output.AlignWrite(16, 0x00);
-
-            foreach (var entry in Entries)
+            using (BinaryWriter writer = new BinaryWriter(output, Encoding.ASCII, true))
             {
-                entry.WriteData(output, inputDirectory);
+                const int sbpHeaderSize = 8;
+                int entityHeaderSize = Entries.Count * SbpEntry.HeaderSize;
+                int headerSize = sbpHeaderSize + entityHeaderSize;
+
+                long headerPosition = output.Position;
+                output.Position += headerSize;
                 output.AlignWrite(16, 0x00);
+
+                foreach (var entry in Entries)
+                {
+                    entry.WriteData(output, inputDirectory);
+                    output.AlignWrite(16, 0x00);
+                }
+
+                long endPosition = output.Position;
+
+                output.Position = headerPosition;
+                writer.Write(0x4C504253); // SBPL
+                writer.Write(Convert.ToByte(Entries.Count));
+                writer.Write(Convert.ToUInt16(headerSize));
+                writer.Write((byte)0x00);
+
+                foreach (var entry in Entries)
+                {
+                    entry.Write(output);
+                }
+
+                output.Position = endPosition;
             }
-
-            long endPosition = output.Position;
-
-            output.Position = headerPosition;
-            writer.Write(0x4C504253); // SBPL
-            writer.Write(Convert.ToByte(Entries.Count));
-            writer.Write(Convert.ToUInt16(headerSize));
-            writer.Write((byte)0x00);
-            
-            foreach (var entry in Entries)
-            {
-                entry.Write(output);
-            }
-
-            output.Position = endPosition;
         }
     }
 }

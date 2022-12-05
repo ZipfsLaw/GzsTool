@@ -113,46 +113,48 @@ namespace GzsTool.Core.Qar
             int shift = (Flags & 0x800) > 0 ? 12 : 10;
             int alignment = 1 << shift;
 
-            BinaryWriter writer = new BinaryWriter(output, Encoding.Default, true);
-            long headerPosition = output.Position;
-            output.Skip(headerSize);
-            long tableOffset = output.Position;
-            output.Skip(8 * Entries.Count);
-            //long unknownTableOffset = output.Position;
-            //output.Skip(16 * UnknownEntries.Count);
-
-            output.AlignWrite(alignment, 0x00);
-            long dataOffset = output.Position;
-            ulong[] sections = new ulong[Entries.Count];
-            for (int i = 0; i < Entries.Count; i++)
+            using (BinaryWriter writer = new BinaryWriter(output, Encoding.Default, true))
             {
-                QarEntry entry = Entries[i];
-                entry.CalculateHash();
-                ulong section = (ulong) (output.Position >> shift) << 40
-                                | (entry.Hash & 0xFF) << 32
-                                | entry.Hash >> 32 & 0xFFFFFFFFFF;
-                sections[i] = section;
-                entry.Write(output, inputDirectory);
+                long headerPosition = output.Position;
+                output.Skip(headerSize);
+                long tableOffset = output.Position;
+                output.Skip(8 * Entries.Count);
+                //long unknownTableOffset = output.Position;
+                //output.Skip(16 * UnknownEntries.Count);
+
                 output.AlignWrite(alignment, 0x00);
+                long dataOffset = output.Position;
+                ulong[] sections = new ulong[Entries.Count];
+                for (int i = 0; i < Entries.Count; i++)
+                {
+                    QarEntry entry = Entries[i];
+                    entry.CalculateHash();
+                    ulong section = (ulong)(output.Position >> shift) << 40
+                                    | (entry.Hash & 0xFF) << 32
+                                    | entry.Hash >> 32 & 0xFFFFFFFFFF;
+                    sections[i] = section;
+                    entry.Write(output, inputDirectory);
+                    output.AlignWrite(alignment, 0x00);
+                }
+                long endPosition = output.Position;
+                uint endPositionHead = (uint)(endPosition >> shift);
+
+                output.Position = headerPosition;
+                writer.Write(QarMagicNumber); // SQAR
+                writer.Write(Flags ^ xorMask1);
+                writer.Write((uint)Entries.Count ^ xorMask2);
+                writer.Write(xorMask3); // unknown count (not saved in the xml and output directory)
+                writer.Write(endPositionHead ^ xorMask4);
+                writer.Write((uint)dataOffset ^ xorMask1);
+                writer.Write(1 ^ xorMask1);
+                writer.Write(0 ^ xorMask2);
+
+                output.Position = tableOffset;
+                byte[] encryptedSectionsData = EncryptSections(sections);
+                writer.Write(encryptedSectionsData);
+
+                output.Position = endPosition;
             }
-            long endPosition = output.Position;
-            uint endPositionHead = (uint) (endPosition >> shift);
-
-            output.Position = headerPosition;
-            writer.Write(QarMagicNumber); // SQAR
-            writer.Write(Flags ^ xorMask1);
-            writer.Write((uint)Entries.Count ^ xorMask2);
-            writer.Write(xorMask3); // unknown count (not saved in the xml and output directory)
-            writer.Write(endPositionHead ^ xorMask4);
-            writer.Write((uint)dataOffset ^ xorMask1);
-            writer.Write(1 ^ xorMask1);
-            writer.Write(0 ^ xorMask2);
-
-            output.Position = tableOffset;
-            byte[] encryptedSectionsData = EncryptSections(sections);
-            writer.Write(encryptedSectionsData);
-
-            output.Position = endPosition;
         }
         
         private byte[] EncryptSections(ulong[] sections)

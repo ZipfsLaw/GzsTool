@@ -294,18 +294,20 @@ namespace GzsTool.Core.Qar
             }
 
             Decrypt1(data, hashLow: (uint)(Hash & 0xFFFFFFFF));
-            BinaryWriter writer = new BinaryWriter(output, Encoding.Default, true);
-            writer.Write(Hash ^ xorMask1Long);
-            writer.Write(compressedSize ^ xorMask2);
-            writer.Write(uncompressedSize ^ xorMask3);
+            using (BinaryWriter writer = new BinaryWriter(output, Encoding.Default, true))
+            {
+                writer.Write(Hash ^ xorMask1Long);
+                writer.Write(compressedSize ^ xorMask2);
+                writer.Write(uncompressedSize ^ xorMask3);
 
-            writer.Write(BitConverter.ToUInt32(hash, 0) ^ xorMask4);
-            writer.Write(BitConverter.ToUInt32(hash, 4) ^ xorMask1);
-            writer.Write(BitConverter.ToUInt32(hash, 8) ^ xorMask1);
-            writer.Write(BitConverter.ToUInt32(hash, 12) ^ xorMask2);
+                writer.Write(BitConverter.ToUInt32(hash, 0) ^ xorMask4);
+                writer.Write(BitConverter.ToUInt32(hash, 4) ^ xorMask1);
+                writer.Write(BitConverter.ToUInt32(hash, 8) ^ xorMask1);
+                writer.Write(BitConverter.ToUInt32(hash, 12) ^ xorMask2);
 
-            // TODO: Maybe reencrypt the lua files.
-            writer.Write(data);
+                // TODO: Maybe reencrypt the lua files.
+                writer.Write(data);
+            }
         }
     }
 }

@@ -117,13 +117,15 @@ namespace GzsTool.Core.Fpk
 
         public void Write(Stream output)
         {
-            BinaryWriter writer = new BinaryWriter(output, Encoding.Default, true);
-            writer.Write(DataOffset);
-            writer.WriteZeros(4);
-            writer.Write(DataSize);
-            writer.WriteZeros(4);
-            FilePathFpkString.Write(output);
-            writer.Write(Md5Hash);
+            using (BinaryWriter writer = new BinaryWriter(output, Encoding.Default, true))
+            {
+                writer.Write(DataOffset);
+                writer.WriteZeros(4);
+                writer.Write(DataSize);
+                writer.WriteZeros(4);
+                FilePathFpkString.Write(output);
+                writer.Write(Md5Hash);
+            }
         }
 
         public void WriteData(Stream output, IDirectory inputDirectory)

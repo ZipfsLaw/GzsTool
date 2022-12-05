@@ -64,10 +64,12 @@ namespace GzsTool.Core.Sbp
 
         public void Write(Stream output)
         {
-            BinaryWriter writer = new BinaryWriter(output, Encoding.ASCII, true);
-            writer.Write(Encoding.ASCII.GetBytes(Magic));
-            writer.Write(Offset);
-            writer.Write(Size);
+            using (BinaryWriter writer = new BinaryWriter(output, Encoding.ASCII, true))
+            {
+                writer.Write(Encoding.ASCII.GetBytes(Magic));
+                writer.Write(Offset);
+                writer.Write(Size);
+            }
         }
 
         public void WriteData(Stream output, IDirectory inputDirectory)
