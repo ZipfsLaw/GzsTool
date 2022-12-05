@@ -23,10 +23,12 @@ namespace GzsTool.Core.Qar
         public static bool IsQarFile(Stream input)
         {
             long startPosition = input.Position;
-            BinaryReader reader = new BinaryReader(input, Encoding.ASCII, true);
-            int magicNumber = reader.ReadInt32();
-            input.Position = startPosition;
-            return magicNumber == QarMagicNumber;
+            using (BinaryReader reader = new BinaryReader(input, Encoding.ASCII, true))
+            {
+                int magicNumber = reader.ReadInt32();
+                input.Position = startPosition;
+                return magicNumber == QarMagicNumber;
+            }
         }
 
         public override void Read(Stream input)
@@ -36,36 +38,38 @@ namespace GzsTool.Core.Qar
             const uint xorMask3 = 0xD05608C3;
             const uint xorMask4 = 0x532C7319;
 
-            BinaryReader reader = new BinaryReader(input, Encoding.Default, true);
-            uint magicNumber = reader.ReadUInt32(); // SQAR
-            Flags = reader.ReadUInt32() ^ xorMask1;
-            uint fileCount = reader.ReadUInt32() ^ xorMask2;
-            uint unknownCount = reader.ReadUInt32() ^ xorMask3;
-            uint blockFileEnd = reader.ReadUInt32() ^ xorMask4;
-            uint offsetFirstFile = reader.ReadUInt32() ^ xorMask1;
-            uint unknown1 = reader.ReadUInt32() ^ xorMask1; // 1
-            uint unknown2 = reader.ReadUInt32() ^ xorMask2; // 0
-
-            // Determines the alignment block size.
-            int blockShiftBits = (Flags & 0x800) > 0 ? 12 : 10;
-
-            byte[] sectionsData = reader.ReadBytes((int)(8 * fileCount));
-            ulong[] sections = DecryptSectionList(fileCount, sectionsData);
-            byte[] unknownSectionData = reader.ReadBytes((int)(16 * unknownCount));
-
-            List<QarEntry> entries = new List<QarEntry>();
-            foreach (var section in sections)
+            using (BinaryReader reader = new BinaryReader(input, Encoding.Default, true))
             {
-                ulong sectionBlock = section >> 40;
-                ulong hash = section & 0xFFFFFFFFFF;
-                ulong sectionOffset = sectionBlock << blockShiftBits;
-                reader.BaseStream.Position = (long)sectionOffset;
+                uint magicNumber = reader.ReadUInt32(); // SQAR
+                Flags = reader.ReadUInt32() ^ xorMask1;
+                uint fileCount = reader.ReadUInt32() ^ xorMask2;
+                uint unknownCount = reader.ReadUInt32() ^ xorMask3;
+                uint blockFileEnd = reader.ReadUInt32() ^ xorMask4;
+                uint offsetFirstFile = reader.ReadUInt32() ^ xorMask1;
+                uint unknown1 = reader.ReadUInt32() ^ xorMask1; // 1
+                uint unknown2 = reader.ReadUInt32() ^ xorMask2; // 0
 
-                var entry = new QarEntry();
-                entry.Read(reader);
-                entries.Add(entry);
+                // Determines the alignment block size.
+                int blockShiftBits = (Flags & 0x800) > 0 ? 12 : 10;
+
+                byte[] sectionsData = reader.ReadBytes((int)(8 * fileCount));
+                ulong[] sections = DecryptSectionList(fileCount, sectionsData);
+                byte[] unknownSectionData = reader.ReadBytes((int)(16 * unknownCount));
+
+                List<QarEntry> entries = new List<QarEntry>();
+                foreach (var section in sections)
+                {
+                    ulong sectionBlock = section >> 40;
+                    ulong hash = section & 0xFFFFFFFFFF;
+                    ulong sectionOffset = sectionBlock << blockShiftBits;
+                    reader.BaseStream.Position = (long)sectionOffset;
+
+                    var entry = new QarEntry();
+                    entry.Read(reader);
+                    entries.Add(entry);
+                }
+                Entries = entries;
             }
-            Entries = entries;
         }
 
         private static ulong[] DecryptSectionList(uint fileCount, byte[] sections)

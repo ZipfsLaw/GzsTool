@@ -133,38 +133,37 @@ namespace GzsTool.Core.Qar
         private Stream ReadData(Stream input)
         {
             input.Position = DataOffset;
-            BinaryReader reader = new BinaryReader(input, Encoding.Default, true);
-
-            byte[] data = reader.ReadBytes((int)UncompressedSize);
-            Decrypt1(data, hashLow: (uint) (Hash & 0xFFFFFFFF));
-            uint magicEntry = BitConverter.ToUInt32(data, 0);
-            if (magicEntry == 0xA0F8EFE6)
+            using (BinaryReader reader = new BinaryReader(input, Encoding.Default, true))
             {
-                const int headerSize = 8;
-                Key = BitConverter.ToUInt32(data, 4);
-                UncompressedSize -= headerSize;
-                byte[] newData = new byte[UncompressedSize];
-                Array.Copy(data, headerSize, newData, 0, UncompressedSize);
-                Decrypt2(newData, Key);
-                data = newData;
+                byte[] data = reader.ReadBytes((int)UncompressedSize);
+                Decrypt1(data, hashLow: (uint)(Hash & 0xFFFFFFFF));
+                uint magicEntry = BitConverter.ToUInt32(data, 0);
+                if (magicEntry == 0xA0F8EFE6)
+                {
+                    const int headerSize = 8;
+                    Key = BitConverter.ToUInt32(data, 4);
+                    UncompressedSize -= headerSize;
+                    byte[] newData = new byte[UncompressedSize];
+                    Array.Copy(data, headerSize, newData, 0, UncompressedSize);
+                    Decrypt2(newData, Key);
+                    data = newData;
+                }
+                else if (magicEntry == 0xE3F8EFE6)
+                {
+                    const int headerSize = 16;
+                    Key = BitConverter.ToUInt32(data, 4);
+                    UncompressedSize -= headerSize;
+                    byte[] newData = new byte[UncompressedSize];
+                    Array.Copy(data, headerSize, newData, 0, UncompressedSize);
+                    Decrypt2(newData, Key);
+                    data = newData;
+                }
+                if (Compressed)
+                {
+                    data = Compression.Uncompress(data);
+                }
+                return new MemoryStream(data);
             }
-            else if (magicEntry == 0xE3F8EFE6)
-            {
-                const int headerSize = 16;
-                Key = BitConverter.ToUInt32(data, 4);
-                UncompressedSize -= headerSize;
-                byte[] newData = new byte[UncompressedSize];
-                Array.Copy(data, headerSize, newData, 0, UncompressedSize);
-                Decrypt2(newData, Key);
-                data = newData;
-            }
-
-            if (Compressed)
-            {
-                data = Compression.Uncompress(data);
-            }
-
-            return new MemoryStream(data);
         }
         
         private void Decrypt1(byte[] sectionData, uint hashLow)

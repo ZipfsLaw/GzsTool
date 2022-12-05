@@ -31,22 +31,24 @@ namespace GzsTool.Core.Pftxs
         
         public override void Read(Stream input)
         {
-            BinaryReader reader = new BinaryReader(input, Encoding.Default, true);
-            int pftxsMagicNumber = reader.ReadInt32(); // PFTXS
-            int unknown1 = reader.ReadInt32();
-            int unknown2 = reader.ReadInt32();
-            int unknown3 = reader.ReadInt32();
-
-            int texlistMagicNumber = reader.ReadInt32(); // TEXL
-            Size = reader.ReadInt32();
-            FileCount = reader.ReadInt32();
-            int unknown4 = reader.ReadInt32();
-
-            for (int i = 0; i < FileCount; i++)
+            using (BinaryReader reader = new BinaryReader(input, Encoding.Default, true))
             {
-                PftxsFtexFile pftxsFtexFile = new PftxsFtexFile();
-                pftxsFtexFile.Read(input);
-                Files.Add(pftxsFtexFile);
+                int pftxsMagicNumber = reader.ReadInt32(); // PFTXS
+                int unknown1 = reader.ReadInt32();
+                int unknown2 = reader.ReadInt32();
+                int unknown3 = reader.ReadInt32();
+
+                int texlistMagicNumber = reader.ReadInt32(); // TEXL
+                Size = reader.ReadInt32();
+                FileCount = reader.ReadInt32();
+                int unknown4 = reader.ReadInt32();
+
+                for (int i = 0; i < FileCount; i++)
+                {
+                    PftxsFtexFile pftxsFtexFile = new PftxsFtexFile();
+                    pftxsFtexFile.Read(input);
+                    Files.Add(pftxsFtexFile);
+                }
             }
         }
 

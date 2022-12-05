@@ -28,27 +28,29 @@ namespace GzsTool.Core.Fpk
         
         public override void Read(Stream input)
         {
-            BinaryReader reader = new BinaryReader(input, Encoding.Default, true);
-            uint magicNumber1 = reader.ReadUInt32(); // foxf
-            ushort magicNumber2 = reader.ReadUInt16(); // pk
-            FpkType = (FpkType) reader.ReadByte(); // ' ' or 'd'
-            byte magicNumber3 = reader.ReadByte(); // w
-            ushort magicNumber4 = reader.ReadUInt16(); // in
-            uint fileSize = reader.ReadUInt32();
-            reader.Skip(18);
-            uint magicNumber5 = reader.ReadUInt32(); // 2
-            uint fileCount = reader.ReadUInt32();
-            uint referenceCount = reader.ReadUInt32();
-            reader.Skip(4);
-
-            for (int i = 0; i < fileCount; i++)
+            using (BinaryReader reader = new BinaryReader(input, Encoding.Default, true))
             {
-                Entries.Add(FpkEntry.ReadFpkEntry(input));
-            }
+                uint magicNumber1 = reader.ReadUInt32(); // foxf
+                ushort magicNumber2 = reader.ReadUInt16(); // pk
+                FpkType = (FpkType)reader.ReadByte(); // ' ' or 'd'
+                byte magicNumber3 = reader.ReadByte(); // w
+                ushort magicNumber4 = reader.ReadUInt16(); // in
+                uint fileSize = reader.ReadUInt32();
+                reader.Skip(18);
+                uint magicNumber5 = reader.ReadUInt32(); // 2
+                uint fileCount = reader.ReadUInt32();
+                uint referenceCount = reader.ReadUInt32();
+                reader.Skip(4);
 
-            for (int i = 0; i < referenceCount; i++)
-            {
-                References.Add(FpkReference.ReadFpkReference(input));
+                for (int i = 0; i < fileCount; i++)
+                {
+                    Entries.Add(FpkEntry.ReadFpkEntry(input));
+                }
+
+                for (int i = 0; i < referenceCount; i++)
+                {
+                    References.Add(FpkReference.ReadFpkReference(input));
+                }
             }
         }
 

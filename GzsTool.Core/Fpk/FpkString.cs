@@ -27,16 +27,18 @@ namespace GzsTool.Core.Fpk
 
         private void Read(Stream input)
         {
-            BinaryReader reader = new BinaryReader(input, Encoding.Default, true);
-            StringOffset = reader.ReadInt32();
-            reader.Skip(4);
-            StringLength = reader.ReadInt32();
-            reader.Skip(4);
+            using (BinaryReader reader = new BinaryReader(input, Encoding.Default, true))
+            {
+                StringOffset = reader.ReadInt32();
+                reader.Skip(4);
+                StringLength = reader.ReadInt32();
+                reader.Skip(4);
 
-            long endPosition = input.Position;
-            input.Position = StringOffset;
-            Value = reader.ReadString(StringLength);
-            input.Position = endPosition;
+                long endPosition = input.Position;
+                input.Position = StringOffset;
+                Value = reader.ReadString(StringLength);
+                input.Position = endPosition;
+            }
         }
 
         public override string ToString()

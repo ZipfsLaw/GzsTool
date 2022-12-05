@@ -37,32 +37,34 @@ namespace GzsTool.Core.Pftxs
 
         public void Read(Stream input)
         {
-            BinaryReader reader = new BinaryReader(input, Encoding.Default, true);
-            long ftexBaseOffset = reader.BaseStream.Position;
-            int magicNumber = reader.ReadInt32(); // FTEX
-            int size = reader.ReadInt32();
-            Hash = reader.ReadUInt64();
-            int count = reader.ReadInt32();
-            int unknown1 = reader.ReadInt32(); // 0
-            int unknown2 = reader.ReadInt32(); // 0
-            int unknown3 = reader.ReadInt32(); // 0
-
-            Entries = new List<PftxsFtexsFileEntry>();
-            for (int i = 0; i < count; i++)
+            using (BinaryReader reader = new BinaryReader(input, Encoding.Default, true))
             {
-                PftxsFtexsFileEntry entry = new PftxsFtexsFileEntry();
-                entry.Read(input);
+                long ftexBaseOffset = reader.BaseStream.Position;
+                int magicNumber = reader.ReadInt32(); // FTEX
+                int size = reader.ReadInt32();
+                Hash = reader.ReadUInt64();
+                int count = reader.ReadInt32();
+                int unknown1 = reader.ReadInt32(); // 0
+                int unknown2 = reader.ReadInt32(); // 0
+                int unknown3 = reader.ReadInt32(); // 0
 
-                string name;
-                entry.FileNameFound = Hashing.TryGetFileNameFromHash(entry.Hash, out name);
-                entry.FilePath = name;
-                Entries.Add(entry);
-            }
-            
-            foreach (var entry in Entries)
-            {
-                reader.BaseStream.Position = ftexBaseOffset + entry.Offset;
-                entry.Data = reader.ReadBytes(entry.Size);
+                Entries = new List<PftxsFtexsFileEntry>();
+                for (int i = 0; i < count; i++)
+                {
+                    PftxsFtexsFileEntry entry = new PftxsFtexsFileEntry();
+                    entry.Read(input);
+
+                    string name;
+                    entry.FileNameFound = Hashing.TryGetFileNameFromHash(entry.Hash, out name);
+                    entry.FilePath = name;
+                    Entries.Add(entry);
+                }
+
+                foreach (var entry in Entries)
+                {
+                    reader.BaseStream.Position = ftexBaseOffset + entry.Offset;
+                    entry.Data = reader.ReadBytes(entry.Size);
+                }
             }
         }
         

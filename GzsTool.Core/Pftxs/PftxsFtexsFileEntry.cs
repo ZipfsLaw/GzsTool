@@ -58,10 +58,12 @@ namespace GzsTool.Core.Pftxs
 
         public void Read(Stream input)
         {
-            BinaryReader reader = new BinaryReader(input, Encoding.Default, true);
-            Hash = reader.ReadUInt64();
-            Offset = reader.ReadInt32();
-            Size = reader.ReadInt32();
+            using (BinaryReader reader = new BinaryReader(input, Encoding.Default, true))
+            {
+                Hash = reader.ReadUInt64();
+                Offset = reader.ReadInt32();
+                Size = reader.ReadInt32();
+            }
         }
 
         public void Write(BinaryWriter writer)

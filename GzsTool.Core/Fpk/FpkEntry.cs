@@ -56,15 +56,17 @@ namespace GzsTool.Core.Fpk
 
         private void Read(Stream input)
         {
-            BinaryReader reader = new BinaryReader(input, Encoding.Default, true);
-            DataOffset = reader.ReadUInt32();
-            reader.Skip(4);
-            DataSize = reader.ReadInt32();
-            reader.Skip(4);
-            FpkString fileName = FpkString.ReadFpkString(input);
-            Md5Hash = reader.ReadBytes(16);
-            fileName.ResolveString(Md5Hash);
-            FilePathFpkString = fileName;
+            using (BinaryReader reader = new BinaryReader(input, Encoding.Default, true))
+            {
+                DataOffset = reader.ReadUInt32();
+                reader.Skip(4);
+                DataSize = reader.ReadInt32();
+                reader.Skip(4);
+                FpkString fileName = FpkString.ReadFpkString(input);
+                Md5Hash = reader.ReadBytes(16);
+                fileName.ResolveString(Md5Hash);
+                FilePathFpkString = fileName;
+            }
         }
 
         private Func<Stream> ReadDataLazy(Stream input)

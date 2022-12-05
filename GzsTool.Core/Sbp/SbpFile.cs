@@ -17,23 +17,25 @@ namespace GzsTool.Core.Sbp
         
         public override void Read(Stream input)
         {
-            BinaryReader reader = new BinaryReader(input, Encoding.ASCII, true);
-            uint magic = reader.ReadUInt32();
-            byte fileCount = reader.ReadByte();
-            ushort headerSize = reader.ReadUInt16();
-            byte padding = reader.ReadByte();
-
-            List<SbpEntry> entries = new List<SbpEntry>();
-            string entityName = Path.GetFileNameWithoutExtension(Name);
-            for (int i = 0; i < fileCount; i++)
+            using (BinaryReader reader = new BinaryReader(input, Encoding.ASCII, true))
             {
-                var entry = new SbpEntry();
-                entry.FileName = entityName;
-                entry.Read(reader);
-                entries.Add(entry);
+                uint magic = reader.ReadUInt32();
+                byte fileCount = reader.ReadByte();
+                ushort headerSize = reader.ReadUInt16();
+                byte padding = reader.ReadByte();
+
+                List<SbpEntry> entries = new List<SbpEntry>();
+                string entityName = Path.GetFileNameWithoutExtension(Name);
+                for (int i = 0; i < fileCount; i++)
+                {
+                    var entry = new SbpEntry();
+                    entry.FileName = entityName;
+                    entry.Read(reader);
+                    entries.Add(entry);
+                }
+                input.AlignRead(16);
+                Entries = entries;
             }
-            input.AlignRead(16);
-            Entries = entries;
         }
 
         public override IEnumerable<FileDataStreamContainer> ExportFiles(Stream input)
